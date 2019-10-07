@@ -1,47 +1,29 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { createStore } from "redux";
 
 import "./styles.css";
 
-let money = {
-  amount: 100000
-};
-let eventLists = {};
-let eventHub = {
-  trigger(eventName, data) {
-    eventLists[eventName].forEach(eventList => {
-      eventList(data);
-    });
-  },
-  on(eventName, fn) {
-    if (!eventLists[eventName]) {
-      eventLists[eventName] = [];
-    }
-    eventLists[eventName].push(fn);
+let reducers = (state = { money: { amount: 10000 } }, action) => {
+  switch (action.type) {
+    case "我想花钱":
+      return {
+        money: {
+          amount: state.money.amount - action.payload
+        }
+      };
+    default:
+      return state;
   }
 };
-let store = {
-  init() {
-    eventHub.on("我想花钱", data => {
-      money.amount -= data;
-      render();
-    });
-  }
-};
-store.init();
-class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      money: money
-    };
-  }
+let store = createStore(reducers);
 
+class App extends React.Component {
   render() {
     return (
       <div className="root">
-        <BigPapa money={this.state.money} />
-        <YoungPapa money={this.state.money} />
+        <BigPapa money={this.props.store.money} />
+        <YoungPapa money={this.props.store.money} />
       </div>
     );
   }
@@ -76,7 +58,7 @@ class Son1 extends React.Component {
 }
 class Son2 extends React.Component {
   consume = () => {
-    eventHub.trigger("我想花钱", 250);
+    store.dispatch({ type: "我想花钱", payload: 100 });
   };
   render() {
     return (
@@ -99,6 +81,7 @@ class Son4 extends React.Component {
 }
 const rootElement = document.getElementById("root");
 function render() {
-  ReactDOM.render(<App />, rootElement);
+  ReactDOM.render(<App store={store.getState()} />, rootElement);
 }
 render();
+store.subscribe(render);
